@@ -37,7 +37,7 @@ function formatDuration(duration) {
 
 function formatDateTime(datetimeMs) {
     const dateObj = new Date(datetimeMs);
-    return dateObj.getFullYear() + '-' + (''+dateObj.getMonth()).padStart(2, '0') + '-' + (''+dateObj.getDay()).padStart(2, '0') +
+    return dateObj.getFullYear() + '-' + (''+(dateObj.getMonth()+1)).padStart(2, '0') + '-' + (''+dateObj.getDate()).padStart(2, '0') +
         ' ' + (''+dateObj.getHours()).padStart(2, '0') + ':' + (''+dateObj.getMinutes()).padStart(2, '0');
 }
 
