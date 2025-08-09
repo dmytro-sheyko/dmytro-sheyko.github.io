@@ -1,0 +1,37 @@
+body {
+    font-family: Consolas;
+}
+table, tr, td, th, tbody, thead {
+    border: solid 1px;
+    border-collapse: collapse;
+}
+table, tr, thead, tbody {
+    width: 100%;
+}
+a:visited, a {
+    color: darkblue;
+    text-decoration: none;
+}
+a.last-visited-conference {
+    color: red;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+.unknown {
+    background-color: gainsboro;
+}
+.anonymous {
+    background-color: pink;
+}
+.anonymous-title {
+    text-align: center;
+    font-style: italic;
+}
+.number {
+    text-align: right;
+}
+.center {
+    text-align: center;
+}
