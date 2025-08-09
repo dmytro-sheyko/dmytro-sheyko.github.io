@@ -1,5 +1,5 @@
 const CLIENT_ID = '234498786839-apeud8rc31h37bg076mj465rau3ru7k1.apps.googleusercontent.com';
-const API_KEY = 'AIzaSyCOy5VEDrSkxqO2mP_0kqG1pZs729ATxjM';
+const API_KEY = atob(EXTRA);
 const REDIRECT_URI = 'http://localhost:3000/tracker/'
 const SCOPE = 'https://www.googleapis.com/auth/meetings.space.created ' +
     'https://www.googleapis.com/auth/meetings.space.readonly ' +
