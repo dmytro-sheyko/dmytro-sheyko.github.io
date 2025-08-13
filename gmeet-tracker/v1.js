@@ -468,7 +468,7 @@ function renderConferences(tab, conferenceId, groupId) {
         for (const conferenceRecord of recentConferences) {
             const conferenceId = trimPrefix(conferenceRecord.name, PREFIX_CONFERENCE_RECORDS);
             let startTimeMs = Date.parse(conferenceRecord.startTime);
-            let endTimeMs = conferenceRecord.endTime ? Date.parse(conferenceRecord.endTime) : Date.now().getTime();
+            let endTimeMs = conferenceRecord.endTime ? Date.parse(conferenceRecord.endTime) : Date.now();
             let durationMs = Math.max(0, endTimeMs - startTimeMs);
             if (durationMs > 100_000) { // at least 100 sec
                 let durationStr = formatDuration(durationMs);
