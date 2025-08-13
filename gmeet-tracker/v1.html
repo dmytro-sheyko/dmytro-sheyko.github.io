@@ -17,15 +17,25 @@
     <p>Статус: <span id='statusline'></span></p>
     <p>Групи: <a href="" id="tabUnspecified"><i>Не задано</i></a><span id="spanTabs"></span></p>
     <table id='tblConferences' style='display: none;'>
-        <thead><tr><th>Ідентифікатор</th><th>Тривалість</th><th>Початок</th><th>Кінець</th><th>Кімната</th></tr></thead>
+        <thead>
+            <tr><td colspan='5'><a id='hrefSelectContacts' href='#'>Вибрати учасників</a></td></tr>
+            <tr><th>Ідентифікатор</th><th>Тривалість</th><th>Початок</th><th>Кінець</th><th>Кімната</th></tr>
+        </thead>
         <tbody id='bodyConferences'></tbody>
     </table>
     <table id='tblParticipants' style='display: none;'>
         <thead>
-            <tr><td colspan='8'><a id='backHref' href='#'>&lt;&lt;&lt; Повернутися</a></td></tr>
+            <tr><td colspan='8'><a id='backHrefFromParticipants' href='#'>&lt;&lt;&lt; Повернутися</a></td></tr>
             <tr><th>№</th><th>Підрозділ</th><th>Посада</th><th>Ім'я</th><th>Звання</th><th>ЗСУ-002</th><th>E-Mail</th><th>Присутній Як</th></tr>
         </thead>
         <tbody id='bodyParticipants'></tbody>
+    </table>
+    <table id='tblContacts' style='display: none;'>
+        <thead>
+            <tr><td colspan='8'><a id='backHrefFromContacts' href='#'>&lt;&lt;&lt; Повернутися</a> | <a href="javascript:copySelectedContactsToClipboard()">Скопіювати e-mail адреси вибраних учасників</a></td></tr>
+            <tr><th>№</th><th>Підрозділ</th><th>Посада</th><th>Ім'я</th><th>Звання</th><th>ЗСУ-002</th><th>E-Mail</th><th>Вибрано</th></tr>
+        </thead>
+        <tbody id='bodyContacts'></tbody>
     </table>
 </body>
 </html>

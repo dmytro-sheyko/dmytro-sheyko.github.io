@@ -487,7 +487,9 @@ function renderConferences(tab, conferenceId, groupId) {
         }
     }
     $(`#conf_${conferenceId}`).addClass('selected');
+    $('#hrefSelectContacts').attr('href', `#t=o&c=${conferenceId}&g=${groupId}`);
     $('#tblParticipants').hide();
+    $('#tblContacts').hide();
     $('#tblConferences').show();
 }
 
@@ -602,7 +604,6 @@ function renderParticipants(tab, conferenceId, groupId) {
             `</tr>`);
     }
     body.append('<tr><td colspan="8" class="excess-participants">Зайві та невідомі учасники</td></tr>');
-    i = 1;
     for (const userDisplayData of excessiveUsers) {
         let index = userDisplayData.present ? i++ : '';
         if (userDisplayData.anonymous) {
@@ -625,14 +626,136 @@ function renderParticipants(tab, conferenceId, groupId) {
                 `</tr>`);
         }
     }
-    $('#backHref').attr('href', `#t=c&c=${conferenceId}&g=${groupId}`);
+    $('#backHrefFromContacts').attr('href', `#t=c&c=${conferenceId}&g=${groupId}`);
+    $('#backHrefFromParticipants').attr('href', `#t=c&c=${conferenceId}&g=${groupId}`);
     $('#tblConferences').hide();
+    $('#tblContacts').hide();
     $('#tblParticipants').show();
+}
+
+function renderContacts(tab, conferenceId, groupId) {
+    renderGroups(tab, conferenceId, groupId);
+    const body = $('#bodyContacts');
+    body.text('');
+    const requiredUsers = [];
+    const excessiveUsers = [];
+    if (contactUniverse) {
+        for (const [ userId, userInfo ] of contactUniverse.contacts) {
+            const userDisplayData = makeUserDisplayData(userInfo, null);
+            userDisplayData.userInfo = userInfo;
+            const required = userInfo.groups.has(groupId);
+            (required ? requiredUsers : excessiveUsers).push(userDisplayData);
+        }
+    }
+    requiredUsers.sort(compareUserDisplayData);
+    excessiveUsers.sort(compareUserDisplayData);
+    body.append('<tr><td colspan="8" class="required-participants">Обов\'язкові учасники' +
+        ' | <a href="javascript:selectRequiredContacts()">Вибрати всіх</a>' +
+        ' | <a href="javascript:unselectRequiredContacts()">Зняти помітку з усіх</a>' +
+        '</td></tr>');
+    let i = 1;
+    for (const userDisplayData of requiredUsers) {
+        let index = i++;
+        body.append(`<tr>` +
+            `<td>${index}</td>` +
+            `<td>${userDisplayData.department}</td>` +
+            `<td>${userDisplayData.title}</td>` +
+            `<td>${userDisplayData.name}</td>` +
+            `<td>${userDisplayData.rank}</td>` +
+            `<td>${userDisplayData.tel}</td>` +
+            `<td>${userDisplayData.email}</td>` +
+            `<td class='center'><input type='checkbox' id='check_${index}'/></td>` +
+            `</tr>`);
+        const checkbox = $(`#check_${index}`);
+        checkbox.attr('checked', userDisplayData.userInfo.checked);
+        checkbox.change(function() { userDisplayData.userInfo.checked = $(this).is(':checked'); });
+    }
+    body.append('<tr><td colspan="8" class="excess-participants">Необов\'язкові учасники' +
+        ' | <a href="javascript:selectOptionalContacts()">Вибрати всіх</a>' +
+        ' | <a href="javascript:unselectOptionalContacts()">Зняти помітку з усіх</a>' +
+        '</td></tr>');
+    for (const userDisplayData of excessiveUsers) {
+        let index = i++;
+        body.append(`<tr>` +
+            `<td>${index}</td>` +
+            `<td>${userDisplayData.department}</td>` +
+            `<td>${userDisplayData.title}</td>` +
+            `<td>${userDisplayData.name}</td>` +
+            `<td>${userDisplayData.rank}</td>` +
+            `<td>${userDisplayData.tel}</td>` +
+            `<td>${userDisplayData.email}</td>` +
+            `<td class='center'><input type='checkbox' id='check_${index}'/></td>` +
+            `</tr>`);
+        const checkbox = $(`#check_${index}`);
+        checkbox.attr('checked', userDisplayData.userInfo.checked);
+        checkbox.change(function() { userDisplayData.userInfo.checked = $(this).is(':checked'); });
+    }
+    $('#backHrefFromContacts').attr('href', `#t=c&c=${conferenceId}&g=${groupId}`);
+    $('#backHrefFromParticipants').attr('href', `#t=c&c=${conferenceId}&g=${groupId}`);
+    $('#tblConferences').hide();
+    $('#tblParticipants').hide();
+    $('#tblContacts').show();
+}
+
+function selectOrUnselectContacts(sel, req) {
+    let hash = location.hash;
+    if (hash.startsWith('#')) hash = hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const groupId = params.get('g') || '';
+    if (contactUniverse) {
+        for (const [userId, userInfo] of contactUniverse.contacts) {
+            if (userInfo.groups.has(groupId) === req) {
+                userInfo.checked = sel;
+            }
+        }
+    }
+    onHashChange();
+}
+
+function selectRequiredContacts() {
+    console.log('selectRequiredContacts');
+    selectOrUnselectContacts(true, true);
+}
+
+function unselectRequiredContacts() {
+    console.log('unselectRequiredContacts');
+    selectOrUnselectContacts(false, true);
+}
+
+function selectOptionalContacts() {
+    console.log('selectOptionalContacts');
+    selectOrUnselectContacts(true, false);
+}
+
+function unselectOptionalContacts() {
+    console.log('unselectOptionalContacts');
+    selectOrUnselectContacts(false, false);
+}
+
+function copySelectedContactsToClipboard() {
+    console.log('copySelectedContactsToClipboard BEGIN');
+    const emailSet = new Set();
+    if (contactUniverse) {
+        for (const [userId, userInfo] of contactUniverse.contacts) {
+            if (userInfo.checked && userInfo.person && Array.isArray(userInfo.person.emailAddresses)) {
+                for (const emailAddress of userInfo.person.emailAddresses) {
+                    emailSet.add(emailAddress.value);
+                }
+            }
+        }
+    }
+    let buffer = '';
+    for (const email of emailSet) {
+        buffer += `${email}, `;
+    }
+    navigator.clipboard.writeText(buffer);
+    console.log(`copySelectedContactsToClipboard END: ${buffer}`);
 }
 
 function clearEverything() {
     $('#tblConferences').hide();
     $('#tblParticipants').hide();
+    $('#tblContacts').hide();
     $('#spanTabs').text('');
     $('#tabUnspecified').removeClass('selected');
     $('#tabUnspecified').attr('href', '#');
@@ -666,6 +789,10 @@ function onHashChange() {
     } else {
         updateAllContacts(() => {
             switch (tab) {
+                case 'o': {
+                    renderContacts(tab, conferenceId, groupId);
+                    break;
+                }
                 case 'p': {
                     updateParticipants(conferenceId, () => renderParticipants(tab, conferenceId, groupId));
                     break;
