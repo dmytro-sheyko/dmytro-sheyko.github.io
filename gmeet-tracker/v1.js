@@ -306,14 +306,16 @@ function getParticipantsCb(conferenceId, callback, progress = (msg) => {}) {
                 const anonymous = [];
                 const resourceNames = [];
                 const registeredPeople = new Map();
-                for (const participant of json.participants) {
-                    if (participant.signedinUser) {
-                        const userId = trimPrefix(participant.signedinUser.user, PREFIX_USERS);
-                        participants.set(userId, participant);
-                        resourceNames.push(PREFIX_PEOPLE + userId);
-                    }
-                    if (participant.anonymousUser) {
-                        anonymous.push(participant);
+                if (Array.isArray(json.participants)) {
+                    for (const participant of json.participants) {
+                        if (participant.signedinUser) {
+                            const userId = trimPrefix(participant.signedinUser.user, PREFIX_USERS);
+                            participants.set(userId, participant);
+                            resourceNames.push(PREFIX_PEOPLE + userId);
+                        }
+                        if (participant.anonymousUser) {
+                            anonymous.push(participant);
+                        }
                     }
                 }
                 if (resourceNames.length == 0) {
