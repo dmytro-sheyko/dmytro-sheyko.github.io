@@ -16,6 +16,10 @@ a.last-visited-conference {
     color: red;
     text-decoration: none;
 }
+a.selected {
+    color: red;
+    text-decoration: none;
+}
 a:hover {
     text-decoration: underline;
 }
@@ -24,6 +28,15 @@ a:hover {
 }
 .anonymous {
     background-color: pink;
+}
+.absent {
+    color: gray;
+}
+.required-participants {
+    background-color: lightgreen;
+}
+.excess-participants {
+    background-color: orange;
 }
 .anonymous-title {
     text-align: center;
@@ -34,4 +47,10 @@ a:hover {
 }
 .center {
     text-align: center;
+}
+.error {
+    background-color: lightpink;
+}
+.info {
+    background-color: lightgreen;
 }

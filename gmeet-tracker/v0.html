@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Participant Tracker</title>
+    <link rel="stylesheet" href="style.css"></link>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="extra.js"></script>
+    <script src="common.js"></script>
+    <script src="v0.js"></script>
+</head>
+<body>
+    <button id='btnSignIn'>Sign In</button>
+    <button id='btnRefresh'>Оновити</button>
+    <table id='tblConferences' style='display: none;'>
+        <thead><tr><th>Ідентифікатор</th><th>Тривалість</th><th>Початок</th><th>Кінець</th><th>Кімната</th></tr></thead>
+        <tbody id='bodyConferences'></tbody>
+    </table>
+    <table id='tblParticipants' style='display: none;'>
+        <thead>
+            <tr><td colspan='6'><a id='backHref' href='#last='>&lt;&lt;&lt; Повернутися</a></td></tr>
+            <tr><th>№</th><th>Псевдо</th><th>Ім'я</th><th>Посада, Підрозділ</th><th>Звання</th><th>E-Mail</th></tr>
+        </thead>
+        <tbody id='bodyParticipants'></tbody>
+    </table>
+</body>
+</html>
