@@ -42,6 +42,12 @@ a:hover {
     text-align: center;
     font-style: italic;
 }
+.active-conference {
+    color: darkred;
+}
+.tooshort-conference {
+    color: darkgray;
+}
 .number {
     text-align: right;
 }

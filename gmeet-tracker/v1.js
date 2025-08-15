@@ -1,3 +1,4 @@
+const TOOSHORT_CONFERENCE_DURATION_LIMIT_MS = 5*60*1000; // 5min
 let contactUniverse = null;
 let recentConferences = null;
 let selectedParticipants = { conferenceId: '', participants: new Map(), };
@@ -385,13 +386,14 @@ function getParticipantsCb(conferenceId, callback, progress = (msg) => {}) {
     }
 }
 
-function updateAllContacts(next) {
+function updateAllContacts(now, next) {
     if (!contactUniverse) {
         getAllContactsCb((data, error) => {
             if (data) {
                 statusInfo('ок');
                 console.log(data);
                 contactUniverse = data;
+                $('#updateContactsTime').text(formatDateTime(now));
                 next();
             } else {
                 statusError(error);
@@ -403,13 +405,14 @@ function updateAllContacts(next) {
     }
 }
 
-function updateRecentConferences(next) {
+function updateRecentConferences(now, next) {
     if (!recentConferences) {
         getRecentConferencesCb((data, error) => {
             if (data) {
                 statusInfo('ок');
                 console.log(data);
                 recentConferences = data;
+                $('#updateConferencesTime').text(formatDateTime(now));
                 next();
             } else {
                 statusError(error);
@@ -421,13 +424,14 @@ function updateRecentConferences(next) {
     }
 }
 
-function updateParticipants(conferenceId, next) {
+function updateParticipants(conferenceId, now, next) {
     if (selectedParticipants?.conferenceId !== conferenceId) {
         getParticipantsCb(conferenceId, (data, error) => {
             if (data) {
                 statusInfo('ок');
                 console.log(data);
                 selectedParticipants = data;
+                $('#updateParticipantsTime').text(formatDateTime(now));
                 next();
             } else {
                 statusError(error);
@@ -462,7 +466,7 @@ function renderGroups(tab, conferenceId, selectedGroupId) {
     }
 }
 
-function renderConferences(tab, conferenceId, groupId) {
+function renderConferences(tab, conferenceId, groupId, now) {
     renderGroups(tab, conferenceId, groupId);
     const body = $('#bodyConferences');
     body.text('');
@@ -470,20 +474,20 @@ function renderConferences(tab, conferenceId, groupId) {
         for (const conferenceRecord of recentConferences) {
             const conferenceId = trimPrefix(conferenceRecord.name, PREFIX_CONFERENCE_RECORDS);
             let startTimeMs = Date.parse(conferenceRecord.startTime);
-            let endTimeMs = conferenceRecord.endTime ? Date.parse(conferenceRecord.endTime) : Date.now();
+            let endTimeMs = conferenceRecord.endTime ? Date.parse(conferenceRecord.endTime) : now;
             let durationMs = Math.max(0, endTimeMs - startTimeMs);
-            if (durationMs > 100_000) { // at least 100 sec
-                let durationStr = formatDuration(durationMs);
-                let startTimeStr = formatDateTime(startTimeMs);
-                let endTimeStr = conferenceRecord.endTime ? formatDateTime(endTimeMs) : '';
-                body.append(`<tr>` +
-                    `<td><a href='#t=p&c=${conferenceId}&g=${groupId}' id='conf_${conferenceId}'>${conferenceId}</a></td>` +
-                    `<td class='center'>${durationStr}</td>` +
-                    `<td class='center'>${startTimeStr}</td>` +
-                    `<td class='center'>${endTimeStr}</td>` +
-                    `<td class='center'><a href='${conferenceRecord.space.meetingUri}'>${conferenceRecord.space.meetingCode}</td>` +
-                    `</tr>`);
-            }
+            const cls = conferenceRecord.endTime ? durationMs < TOOSHORT_CONFERENCE_DURATION_LIMIT_MS ? 'tooshort-conference' : '' : 'active-conference';
+
+            let durationStr = formatDuration(durationMs);
+            let startTimeStr = formatDateTime(startTimeMs);
+            let endTimeStr = conferenceRecord.endTime ? formatDateTime(endTimeMs) : '';
+            body.append(`<tr class="${cls}">` +
+                `<td><a href='#t=p&c=${conferenceId}&g=${groupId}' id='conf_${conferenceId}'>${conferenceId}</a></td>` +
+                `<td class='center'>${durationStr}</td>` +
+                `<td class='center'>${startTimeStr}</td>` +
+                `<td class='center'>${endTimeStr}</td>` +
+                `<td class='center'><a href='${conferenceRecord.space.meetingUri}'>${conferenceRecord.space.meetingCode}</td>` +
+                `</tr>`);
         }
     }
     $(`#conf_${conferenceId}`).addClass('selected');
@@ -501,12 +505,13 @@ function makeUserDisplayData(userInfo, participant) {
     let rank = '';
     let tel = '';
     let displayName = '';
-    let present = false;
+    let wasPresent = false;
+    let isPresent = false;
     let known = false;
     const person = userInfo?.person ?? participant?.signedinUser.person;
     if (person) {
         if (Array.isArray(person.organizations) && person.organizations.length > 0) {
-            department = person.organizations[0].department ?? '';
+            department = person.organizations[0].department ?? person.organizations[0].name ?? '';
             title = person.organizations[0].title ?? '';
         }
         if (Array.isArray(person.names) && person.names.length > 0) {
@@ -535,13 +540,16 @@ function makeUserDisplayData(userInfo, participant) {
     }
     if (participant) {
         displayName = participant.signedinUser.displayName;
-        present = true;
+        wasPresent = true;
+        isPresent = !participant.latestEndTime;
     }
-    return { department, title, name, rank, tel, email, displayName, present, known, anonymous: false, };
+    return { department, title, name, rank, tel, email, displayName, wasPresent, isPresent, known, anonymous: false, };
 }
 
-function makeAnonymousUser(displayName) {
-    return { department: '', title: '', name: '', rank: '', tel: '', email: '', displayName, present: true, known: false, anonymous: true, };
+function makeAnonymousUser(participant) {
+    const displayName = participant.anonymousUser.displayName;
+    const isPresent = !participant.latestEndTime;
+    return { department: '', title: '', name: '', rank: '', tel: '', email: '', displayName, wasPresent: true, isPresent, known: false, anonymous: true, };
 }
 
 function compareUserDisplayData(a, b) {
@@ -557,7 +565,7 @@ function compareUserDisplayData(a, b) {
     return result;
 }
 
-function renderParticipants(tab, conferenceId, groupId) {
+function renderParticipants(tab, conferenceId, groupId, now) {
     renderGroups(tab, conferenceId, groupId);
     const body = $('#bodyParticipants');
     body.text('');
@@ -584,44 +592,50 @@ function renderParticipants(tab, conferenceId, groupId) {
         }
     }
     for (const participant of selectedParticipants.anonymous) {
-        excessiveUsers.push(makeAnonymousUser(participant.anonymousUser.displayName));
+        excessiveUsers.push(makeAnonymousUser(participant));
     }
     excessiveUsers.sort(compareUserDisplayData);
-    body.append('<tr><td colspan="8" class="required-participants">Обов\'язкові учасники</td></tr>');
-    let i = 1;
+    body.append('<tr><td colspan="9" class="required-participants">Обов\'язкові учасники</td></tr>');
+    let wasPresentIndex = 1;
+    let isPresentIndex = 1;
     for (const userDisplayData of requiredUsers) {
-        let index = userDisplayData.present ? i++ : '';
-        const cls = userDisplayData.present ? '' : 'absent';
+        let wasPresentIndexStr = userDisplayData.wasPresent ? wasPresentIndex++ : '';
+        let isPresentIndexStr = userDisplayData.isPresent ? isPresentIndex++ : '';
+        const cls = userDisplayData.wasPresent ? '' : 'absent';
         body.append(`<tr class='${cls}'>` +
-            `<td>${index}</td>` +
+            `<td>${wasPresentIndexStr}</td>` +
             `<td>${userDisplayData.department}</td>` +
             `<td>${userDisplayData.title}</td>` +
             `<td>${userDisplayData.name}</td>` +
             `<td>${userDisplayData.rank}</td>` +
             `<td>${userDisplayData.tel}</td>` +
             `<td>${userDisplayData.email}</td>` +
+            `<td>${isPresentIndexStr}</td>` +
             `<td>${userDisplayData.displayName}</td>` +
             `</tr>`);
     }
-    body.append('<tr><td colspan="8" class="excess-participants">Зайві та невідомі учасники</td></tr>');
+    body.append('<tr><td colspan="9" class="excess-participants">Зайві та невідомі учасники</td></tr>');
     for (const userDisplayData of excessiveUsers) {
-        let index = userDisplayData.present ? i++ : '';
+        let wasPresentIndexStr = userDisplayData.wasPresent ? wasPresentIndex++ : '';
+        let isPresentIndexStr = userDisplayData.isPresent ? isPresentIndex++ : '';
         if (userDisplayData.anonymous) {
             body.append(`<tr class="anonymous">` +
-                `<td>${index}</td>` +
+                `<td>${wasPresentIndexStr}</td>` +
                 `<td colspan="6" class="anonymous-title">Анонім</td>` +
+                `<td>${isPresentIndexStr}</td>` +
                 `<td>${userDisplayData.displayName}</td>` +
                 `</tr>`);
         } else {
             const cls = userDisplayData.known ? '' : 'unknown';
             body.append(`<tr class='${cls}'>` +
-                `<td>${index}</td>` +
+                `<td>${wasPresentIndexStr}</td>` +
                 `<td>${userDisplayData.department}</td>` +
                 `<td>${userDisplayData.title}</td>` +
                 `<td>${userDisplayData.name}</td>` +
                 `<td>${userDisplayData.rank}</td>` +
                 `<td>${userDisplayData.tel}</td>` +
                 `<td>${userDisplayData.email}</td>` +
+                `<td>${isPresentIndexStr}</td>` +
                 `<td>${userDisplayData.displayName}</td>` +
                 `</tr>`);
         }
@@ -633,7 +647,7 @@ function renderParticipants(tab, conferenceId, groupId) {
     $('#tblParticipants').show();
 }
 
-function renderContacts(tab, conferenceId, groupId) {
+function renderContacts(tab, conferenceId, groupId, now) {
     renderGroups(tab, conferenceId, groupId);
     const body = $('#bodyContacts');
     body.text('');
@@ -777,6 +791,7 @@ function onRefreshParticipants() {
 }
 
 function onHashChange() {
+    const now = Date.now();
     let hash = location.hash;
     if (hash.startsWith('#')) hash = hash.substring(1);
     const params = new URLSearchParams(hash);
@@ -787,19 +802,19 @@ function onHashChange() {
     if (!access_token) {
         clearEverything();
     } else {
-        updateAllContacts(() => {
+        updateAllContacts(now, () => {
             switch (tab) {
                 case 'o': {
-                    renderContacts(tab, conferenceId, groupId);
+                    renderContacts(tab, conferenceId, groupId, now);
                     break;
                 }
                 case 'p': {
-                    updateParticipants(conferenceId, () => renderParticipants(tab, conferenceId, groupId));
+                    updateParticipants(conferenceId, now, () => renderParticipants(tab, conferenceId, groupId, now));
                     break;
                 }
                 default:
                 case 'c': {
-                    updateRecentConferences(() => renderConferences(tab, conferenceId, groupId));
+                    updateRecentConferences(now, () => renderConferences(tab, conferenceId, groupId, now));
                     break;
                 }
             }

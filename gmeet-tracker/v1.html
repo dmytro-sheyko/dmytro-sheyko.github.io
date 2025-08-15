@@ -10,10 +10,10 @@
     <script src="v1.js"></script>
 </head>
 <body>
-    <button id='btnSignIn'>Авторизуватись</button>
-    <button id='btnRefreshContacts'>Оновити Контакти</button>
-    <button id='btnRefreshConferences'>Оновити Конференції</button>
-    <button id='btnRefreshParticipants'>Оновити Учасників</button>
+    <button id='btnSignIn'>Авторизуватись</button> |
+    Контакти <span id='updateContactsTime'>?</span> <button id='btnRefreshContacts'>Оновити</button> |
+    Конференції <span id='updateConferencesTime'>?</span> <button id='btnRefreshConferences'>Оновити</button> |
+    Учасники <span id='updateParticipantsTime'>?</span> <button id='btnRefreshParticipants'>Оновити</button> |
     <p>Статус: <span id='statusline'></span></p>
     <p>Групи: <a href="" id="tabUnspecified"><i>Не задано</i></a><span id="spanTabs"></span></p>
     <table id='tblConferences' style='display: none;'>
@@ -25,8 +25,8 @@
     </table>
     <table id='tblParticipants' style='display: none;'>
         <thead>
-            <tr><td colspan='8'><a id='backHrefFromParticipants' href='#'>&lt;&lt;&lt; Повернутися</a></td></tr>
-            <tr><th>№</th><th>Підрозділ</th><th>Посада</th><th>Ім'я</th><th>Звання</th><th>ЗСУ-002</th><th>E-Mail</th><th>Присутній Як</th></tr>
+            <tr><td colspan='9'><a id='backHrefFromParticipants' href='#'>&lt;&lt;&lt; Повернутися</a></td></tr>
+            <tr><th>№</th><th>Підрозділ</th><th>Посада</th><th>Ім'я</th><th>Звання</th><th>ЗСУ-002</th><th>E-Mail</th><th>№</th><th>Присутній Як</th></tr>
         </thead>
         <tbody id='bodyParticipants'></tbody>
     </table>
