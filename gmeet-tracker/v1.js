@@ -508,6 +508,8 @@ function makeUserDisplayData(userInfo, participant) {
     let wasPresent = false;
     let isPresent = false;
     let known = false;
+    let startTime = '';
+    let endTime = '';
     const person = userInfo?.person ?? participant?.signedinUser.person;
     if (person) {
         if (Array.isArray(person.organizations) && person.organizations.length > 0) {
@@ -542,14 +544,18 @@ function makeUserDisplayData(userInfo, participant) {
         displayName = participant.signedinUser.displayName;
         wasPresent = true;
         isPresent = !participant.latestEndTime;
+        startTime = formatTimeOnly(Date.parse(participant.earliestStartTime));
+        endTime = isPresent ? '' : formatTimeOnly(Date.parse(participant.latestEndTime));
     }
-    return { department, title, name, rank, tel, email, displayName, wasPresent, isPresent, known, anonymous: false, };
+    return { department, title, name, rank, tel, email, displayName, wasPresent, isPresent, known, anonymous: false, startTime, endTime, };
 }
 
 function makeAnonymousUser(participant) {
     const displayName = participant.anonymousUser.displayName;
     const isPresent = !participant.latestEndTime;
-    return { department: '', title: '', name: '', rank: '', tel: '', email: '', displayName, wasPresent: true, isPresent, known: false, anonymous: true, };
+    const startTime = formatTimeOnly(Date.parse(participant.earliestStartTime));
+    const endTime = isPresent ? '' : formatTimeOnly(Date.parse(participant.latestEndTime));
+    return { department: '', title: '', name: '', rank: '', tel: '', email: '', displayName, wasPresent: true, isPresent, known: false, anonymous: true, startTime, endTime, };
 }
 
 function compareUserDisplayData(a, b) {
@@ -595,7 +601,7 @@ function renderParticipants(tab, conferenceId, groupId, now) {
         excessiveUsers.push(makeAnonymousUser(participant));
     }
     excessiveUsers.sort(compareUserDisplayData);
-    body.append('<tr><td colspan="9" class="required-participants">Обов\'язкові учасники</td></tr>');
+    body.append('<tr><td colspan="11" class="required-participants">Обов\'язкові учасники</td></tr>');
     let wasPresentIndex = 1;
     let isPresentIndex = 1;
     for (const userDisplayData of requiredUsers) {
@@ -612,9 +618,11 @@ function renderParticipants(tab, conferenceId, groupId, now) {
             `<td>${userDisplayData.email}</td>` +
             `<td>${isPresentIndexStr}</td>` +
             `<td>${userDisplayData.displayName}</td>` +
+            `<td>${userDisplayData.startTime}</td>` +
+            `<td>${userDisplayData.endTime}</td>` +
             `</tr>`);
     }
-    body.append('<tr><td colspan="9" class="excess-participants">Зайві та невідомі учасники</td></tr>');
+    body.append('<tr><td colspan="11" class="excess-participants">Зайві та невідомі учасники</td></tr>');
     for (const userDisplayData of excessiveUsers) {
         let wasPresentIndexStr = userDisplayData.wasPresent ? wasPresentIndex++ : '';
         let isPresentIndexStr = userDisplayData.isPresent ? isPresentIndex++ : '';
@@ -624,6 +632,8 @@ function renderParticipants(tab, conferenceId, groupId, now) {
                 `<td colspan="6" class="anonymous-title">Анонім</td>` +
                 `<td>${isPresentIndexStr}</td>` +
                 `<td>${userDisplayData.displayName}</td>` +
+                `<td>${userDisplayData.startTime}</td>` +
+                `<td>${userDisplayData.endTime}</td>` +
                 `</tr>`);
         } else {
             const cls = userDisplayData.known ? '' : 'unknown';
@@ -637,6 +647,8 @@ function renderParticipants(tab, conferenceId, groupId, now) {
                 `<td>${userDisplayData.email}</td>` +
                 `<td>${isPresentIndexStr}</td>` +
                 `<td>${userDisplayData.displayName}</td>` +
+                `<td>${userDisplayData.startTime}</td>` +
+                `<td>${userDisplayData.endTime}</td>` +
                 `</tr>`);
         }
     }

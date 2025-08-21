@@ -38,6 +38,11 @@ function formatDuration(duration) {
     return (''+hr).padStart(2, '0') + ':' + (''+min).padStart(2, '0') + ':' + (''+sec).padStart(2, '0');
 }
 
+function formatTimeOnly(datetimeMs) {
+    const dateObj = new Date(datetimeMs);
+    return (''+dateObj.getHours()).padStart(2, '0') + ':' + (''+dateObj.getMinutes()).padStart(2, '0') + ':' + (''+dateObj.getSeconds()).padStart(2, '0');
+}
+
 function formatDateTime(datetimeMs) {
     const dateObj = new Date(datetimeMs);
     return dateObj.getFullYear() + '-' + (''+(dateObj.getMonth()+1)).padStart(2, '0') + '-' + (''+dateObj.getDate()).padStart(2, '0') +
