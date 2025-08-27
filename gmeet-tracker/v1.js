@@ -770,9 +770,14 @@ function copySelectedContactsToClipboard() {
             }
         }
     }
+    let count = 0;
     let buffer = '';
     for (const email of emailSet) {
         buffer += `${email}, `;
+        count += 1;
+        if (count % 10 == 0) {
+            buffer += '\n\n'
+        }
     }
     navigator.clipboard.writeText(buffer);
     console.log(`copySelectedContactsToClipboard END: ${buffer}`);
