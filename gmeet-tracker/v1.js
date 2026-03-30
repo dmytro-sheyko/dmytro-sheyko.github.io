@@ -3,6 +3,12 @@ let contactUniverse = null;
 let recentConferences = null;
 let selectedParticipants = { conferenceId: '', participants: new Map(), };
 
+function append(whole, item, sep = ',<br/>') {
+    if (whole !== '') whole += sep;
+    whole += item;
+    return whole;
+}
+
 function statusInfo(msg) {
     $("#statusline").removeClass('error');
     $("#statusline").addClass('info');
@@ -504,7 +510,9 @@ function makeUserDisplayData(userInfo, participant) {
     let email = '';
     let rank = '';
     let tel = '';
+    let threema = '';
     let displayName = '';
+    let userId = '';
     let wasPresent = false;
     let isPresent = false;
     let known = false;
@@ -520,17 +528,23 @@ function makeUserDisplayData(userInfo, participant) {
             name = person.names[0].displayNameLastFirst ?? person.names[0].displayName;
         }
         if (Array.isArray(person.emailAddresses) && person.emailAddresses.length > 0) {
-            email = person.emailAddresses[0].value;
+            for (const emailAddress of person.emailAddresses) {
+                email = append(email, emailAddress.value)
+            }
         }
         if (Array.isArray(person.userDefined)) {
             for (const item of person.userDefined) {
                 switch (item.key) {
                     case 'звання': {
-                        rank = item.value;
+                        rank = append(rank, item.value)
                         break;
                     }
                     case 'ЗСУ-002': {
-                        tel = item.value;
+                        tel = append(tel, item.value)
+                        break;
+                    }
+                    case 'threema': {
+                        threema = append(threema, item.value)
                         break;
                     }
                 }
@@ -542,12 +556,13 @@ function makeUserDisplayData(userInfo, participant) {
     }
     if (participant) {
         displayName = participant.signedinUser.displayName;
+        userId = participant.signedinUser.user.replace('users/', '')
         wasPresent = true;
         isPresent = !participant.latestEndTime;
         startTime = formatTimeOnly(Date.parse(participant.earliestStartTime));
         endTime = isPresent ? '' : formatTimeOnly(Date.parse(participant.latestEndTime));
     }
-    return { department, title, name, rank, tel, email, displayName, wasPresent, isPresent, known, anonymous: false, startTime, endTime, };
+    return { department, title, name, rank, tel, threema, email, displayName, userId, wasPresent, isPresent, known, anonymous: false, startTime, endTime, };
 }
 
 function makeAnonymousUser(participant) {
@@ -555,7 +570,7 @@ function makeAnonymousUser(participant) {
     const isPresent = !participant.latestEndTime;
     const startTime = formatTimeOnly(Date.parse(participant.earliestStartTime));
     const endTime = isPresent ? '' : formatTimeOnly(Date.parse(participant.latestEndTime));
-    return { department: '', title: '', name: '', rank: '', tel: '', email: '', displayName, wasPresent: true, isPresent, known: false, anonymous: true, startTime, endTime, };
+    return { department: '', title: '', name: '', rank: '', tel: '', threema: '', email: '', displayName, userId:'', wasPresent: true, isPresent, known: false, anonymous: true, startTime, endTime, };
 }
 
 function compareUserDisplayData(a, b) {
@@ -601,7 +616,7 @@ function renderParticipants(tab, conferenceId, groupId, now) {
         excessiveUsers.push(makeAnonymousUser(participant));
     }
     excessiveUsers.sort(compareUserDisplayData);
-    body.append('<tr><td colspan="11" class="required-participants">Обов\'язкові учасники</td></tr>');
+    body.append('<tr><td colspan="12" class="required-participants">Обов\'язкові учасники</td></tr>');
     let wasPresentIndex = 1;
     let isPresentIndex = 1;
     for (const userDisplayData of requiredUsers) {
@@ -615,21 +630,22 @@ function renderParticipants(tab, conferenceId, groupId, now) {
             `<td>${userDisplayData.name}</td>` +
             `<td>${userDisplayData.rank}</td>` +
             `<td>${userDisplayData.tel}</td>` +
+            `<td>${userDisplayData.threema}</td>` +
             `<td>${userDisplayData.email}</td>` +
             `<td>${isPresentIndexStr}</td>` +
-            `<td>${userDisplayData.displayName}</td>` +
+            `<td>${userDisplayData.displayName}<br/><span class='userid'>${userDisplayData.userId}</span></td>` +
             `<td>${userDisplayData.startTime}</td>` +
             `<td>${userDisplayData.endTime}</td>` +
             `</tr>`);
     }
-    body.append('<tr><td colspan="11" class="excess-participants">Зайві та невідомі учасники</td></tr>');
+    body.append('<tr><td colspan="12" class="excess-participants">Зайві та невідомі учасники</td></tr>');
     for (const userDisplayData of excessiveUsers) {
         let wasPresentIndexStr = userDisplayData.wasPresent ? wasPresentIndex++ : '';
         let isPresentIndexStr = userDisplayData.isPresent ? isPresentIndex++ : '';
         if (userDisplayData.anonymous) {
             body.append(`<tr class="anonymous">` +
                 `<td>${wasPresentIndexStr}</td>` +
-                `<td colspan="6" class="anonymous-title">Анонім</td>` +
+                `<td colspan="7" class="anonymous-title">Анонім</td>` +
                 `<td>${isPresentIndexStr}</td>` +
                 `<td>${userDisplayData.displayName}</td>` +
                 `<td>${userDisplayData.startTime}</td>` +
@@ -644,9 +660,10 @@ function renderParticipants(tab, conferenceId, groupId, now) {
                 `<td>${userDisplayData.name}</td>` +
                 `<td>${userDisplayData.rank}</td>` +
                 `<td>${userDisplayData.tel}</td>` +
+                `<td>${userDisplayData.threema}</td>` +
                 `<td>${userDisplayData.email}</td>` +
                 `<td>${isPresentIndexStr}</td>` +
-                `<td>${userDisplayData.displayName}</td>` +
+                `<td>${userDisplayData.displayName}<br/><span class='userid'>${userDisplayData.userId}</span></td>` +
                 `<td>${userDisplayData.startTime}</td>` +
                 `<td>${userDisplayData.endTime}</td>` +
                 `</tr>`);
@@ -675,7 +692,7 @@ function renderContacts(tab, conferenceId, groupId, now) {
     }
     requiredUsers.sort(compareUserDisplayData);
     excessiveUsers.sort(compareUserDisplayData);
-    body.append('<tr><td colspan="8" class="required-participants">Обов\'язкові учасники' +
+    body.append('<tr><td colspan="9" class="required-participants">Обов\'язкові учасники' +
         ' | <a href="javascript:selectRequiredContacts()">Вибрати всіх</a>' +
         ' | <a href="javascript:unselectRequiredContacts()">Зняти помітку з усіх</a>' +
         '</td></tr>');
@@ -689,6 +706,7 @@ function renderContacts(tab, conferenceId, groupId, now) {
             `<td>${userDisplayData.name}</td>` +
             `<td>${userDisplayData.rank}</td>` +
             `<td>${userDisplayData.tel}</td>` +
+            `<td>${userDisplayData.threema}</td>` +
             `<td>${userDisplayData.email}</td>` +
             `<td class='center'><input type='checkbox' id='check_${index}'/></td>` +
             `</tr>`);
@@ -696,7 +714,7 @@ function renderContacts(tab, conferenceId, groupId, now) {
         checkbox.attr('checked', userDisplayData.userInfo.checked);
         checkbox.change(function() { userDisplayData.userInfo.checked = $(this).is(':checked'); });
     }
-    body.append('<tr><td colspan="8" class="excess-participants">Необов\'язкові учасники' +
+    body.append('<tr><td colspan="9" class="excess-participants">Необов\'язкові учасники' +
         ' | <a href="javascript:selectOptionalContacts()">Вибрати всіх</a>' +
         ' | <a href="javascript:unselectOptionalContacts()">Зняти помітку з усіх</a>' +
         '</td></tr>');
@@ -709,6 +727,7 @@ function renderContacts(tab, conferenceId, groupId, now) {
             `<td>${userDisplayData.name}</td>` +
             `<td>${userDisplayData.rank}</td>` +
             `<td>${userDisplayData.tel}</td>` +
+            `<td>${userDisplayData.threema}</td>` +
             `<td>${userDisplayData.email}</td>` +
             `<td class='center'><input type='checkbox' id='check_${index}'/></td>` +
             `</tr>`);

@@ -1,5 +1,6 @@
 body {
     font-family: Consolas;
+    font-size: 12pt;
 }
 table, tr, td, th, tbody, thead {
     border: solid 1px;
@@ -75,4 +76,9 @@ a:hover {
 }
 .info {
     background-color: lightgreen;
+}
+.userid {
+    font-style: italic;
+    font-size: 9pt;
+    color: gray;
 }
